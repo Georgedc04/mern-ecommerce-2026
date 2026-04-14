@@ -1,138 +1,166 @@
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import * as React from "react"
+import { Link } from "react-router-dom"
+import { useAuth } from "@clerk/react"
 import {
   Heart,
   LogIn,
   LogOut,
   Menu,
   ShoppingBag,
-  ShoppingCart,
+  ShoppingBasket,
   Store,
   User,
-  type LucideIcon,
-} from "lucide-react";
-import { Link } from "react-router-dom";
+  ChevronRight,
+} from "lucide-react"
 
-type CustomerMobileNavbarProps = {
-  isSignedIn: boolean;
-};
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet"
+import { cn } from "@/lib/utils"
 
-export type NavItem = {
-  label: string;
-  href: string;
-  icon: LucideIcon;
-};
+// Store Hooks - Connecting mobile to the same logic as desktop
+import { useCustomerWishlistStore } from "@/features/customer/wishlist/store"
+import { useCustomerProfileStore } from "@/features/customer/profile/store"
+import { useCustomerCartAndCheckoutStore } from "@/features/customer/cart-and-checkout/store"
+import { useCustomerOrdersStore } from "@/features/customer/orders/store"
 
-const collectionsPage: NavItem = {
-  label: "Collections",
-  href: "/collections",
-  icon: ShoppingBag,
-};
-
-const iconLink =
-  "relative inline-flex h-10 w-10 items-center justify-center rounded-xl text-foreground/90 transition hover:bg-white/5 hover:text-foreground";
-
-const mobileWrap = "ml-auto flex items-center gap-1 lg:hidden";
-
-const menuButton =
-  "h-11 w-11 rounded-xl border border-white/10 bg-white/5 text-foreground hover:bg-white/10";
-
-const sheetContent =
-  "w-[380px] max-w-[92vw] border-r border-border bg-background p-0 sm:w-[460px]";
-
-const brandWrap = "flex items-center gap-3";
-
-const brandTitle =
-  "text-[25px] font-semibold tracking-[-0.02em] text-foreground";
-
-const brandBlock = "px-5 py-6 sm:px-6";
-
-const drawerSection = "space-y-3 px-5 py-5 sm:px-6";
-
-const drawerTitle = "text-sm font-semibold tracking-wide text-muted-foreground";
-
-const drawerItemsWrap = "space-y-1";
-
-const drawerItemLink =
-  "flex items-center gap-3 rounded-xl px-2 py-3 text-[18px] font-medium text-foreground transition hover:bg-white/5";
-
-const cartBadge =
-  "absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[11px] font-semibold leading-5 text-black";
-
-function DrawerSection({ title, items }: { title: string; items: NavItem[] }) {
-  return (
-    <section className={drawerSection}>
-      <p className={drawerTitle}>{title}</p>
-      <div className={drawerItemsWrap}>
-        {items.map((item) => {
-          const Icon = item.icon;
-
-          return (
-            <Link key={item.label} to={item.href} className={drawerItemLink}>
-              <Icon className="h-4.5 w-4.5" />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
-      </div>
-    </section>
-  );
+const MOBILE_NAV_STYLES = {
+  item: "flex items-center justify-between w-full rounded-sm px-3 py-2.5 text-[13px] font-medium transition-colors hover:bg-zinc-100 active:bg-zinc-200",
+  icon: "size-4 mr-3 text-zinc-500",
+  badge: "ml-auto flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground",
+  sectionLabel: "px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-zinc-400",
 }
 
-export function CustomerMobileNavbar({
-  isSignedIn,
-}: CustomerMobileNavbarProps) {
-  const mobileAccountItems: NavItem[] = isSignedIn
-    ? [
-        { label: "Account", href: "/account", icon: User },
-        { label: "Wishlist", href: "/wishlist", icon: Heart },
-        { label: "Sign Out", href: "/logout", icon: LogOut },
-      ]
-    : [
-        {
-          label: "Login",
-          href: "/sign-in",
-          icon: LogIn,
-        },
-      ];
+export function CustomerMobileNavbar({ isSignedIn }: { isSignedIn: boolean }) {
+  const [isOpen, setIsOpen] = React.useState(false)
+  const { signOut } = useAuth()
+
+  // Feature Stores
+  const { items: wishlistItems, setOpen: setWishlistOpen } = useCustomerWishlistStore()
+  const { openProfile } = useCustomerProfileStore()
+  const { openOrders } = useCustomerOrdersStore()
+  useCustomerCartAndCheckoutStore()
+
+  const wishlistCount = wishlistItems.length
+
+  // Helper: Closes mobile menu then triggers the Desktop-style Dialog
+  const triggerAction = (action: () => void) => {
+    setIsOpen(false)
+    action()
+  }
 
   return (
-    <div className={mobileWrap}>
-      <Link to={"/cart"} className={iconLink}>
-        <ShoppingCart className="h-4.5 w-4.5" />
-        <span className={cartBadge}>{0}</span>
-      </Link>
-      <Sheet>
+    <div className="ml-auto flex items-center gap-1 lg:hidden">
+      
+      
+
+      {/* 2. MENU DRAWER */}
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
-          <Button variant={"ghost"} size={"icon"} className={menuButton}>
-            <Menu className="h-5 w-5" />
+          <Button variant="ghost" size="icon" className="size-9 rounded-full">
+            <Menu className="size-5" />
           </Button>
         </SheetTrigger>
 
-        <SheetContent side="left" className={sheetContent}>
-          <SheetHeader className="sr-only">
-            <SheetTitle>Menu</SheetTitle>
+        <SheetContent side="left" className="w-70 p-0 border-none rounded-r-xl flex flex-col">
+          <SheetHeader className="p-4 border-b bg-zinc-50/50">
+            <SheetTitle className="flex items-center gap-2">
+              <Store className="size-5 text-primary" />
+              <span className="text-base font-bold tracking-tight">E-Shopify</span>
+            </SheetTitle>
           </SheetHeader>
-          <div className={brandBlock}>
-            <Link to={"/"} className={brandWrap}>
-              <Store className="h-10 w-10" />
-              <span className={brandTitle}>E-Shopify</span>
-            </Link>
-          </div>
-          <Separator />
-          <DrawerSection title="Collections" items={[collectionsPage]} />
 
-          <Separator />
-          <DrawerSection title="Account" items={mobileAccountItems} />
+          <div className="flex-1 overflow-y-auto py-4">
+            {/* SHOP SECTION */}
+            <div className="mb-6">
+              <p className={MOBILE_NAV_STYLES.sectionLabel}>Shop</p>
+              <Link 
+                to="/collections" 
+                onClick={() => setIsOpen(false)}
+                className={MOBILE_NAV_STYLES.item}
+              >
+                <span className="flex items-center">
+                  <ShoppingBag className={MOBILE_NAV_STYLES.icon} /> Collections
+                </span>
+                <ChevronRight className="size-3 text-zinc-300" />
+              </Link>
+            </div>
+
+            <Separator className="mx-4 mb-6 opacity-50" />
+
+            {/* ACCOUNT SECTION */}
+            <div>
+              <p className={MOBILE_NAV_STYLES.sectionLabel}>Personal</p>
+              
+              {isSignedIn ? (
+                <div className="space-y-0.5">
+                  <button 
+                    onClick={() => triggerAction(openProfile)}
+                    className={MOBILE_NAV_STYLES.item}
+                  >
+                    <span className="flex items-center">
+                      <User className={MOBILE_NAV_STYLES.icon} /> My Profile
+                    </span>
+                  </button>
+
+                  <button 
+                    onClick={() => triggerAction(openOrders)}
+                    className={MOBILE_NAV_STYLES.item}
+                  >
+                    <span className="flex items-center">
+                      <ShoppingBasket className={MOBILE_NAV_STYLES.icon} /> My Orders
+                    </span>
+                  </button>
+
+                  <button 
+                    onClick={() => triggerAction(() => setWishlistOpen(true))}
+                    className={MOBILE_NAV_STYLES.item}
+                  >
+                    <span className="flex items-center">
+                      <Heart className={cn(MOBILE_NAV_STYLES.icon, wishlistCount > 0 && "fill-primary text-primary")} /> 
+                      Wishlist
+                    </span>
+                    {wishlistCount > 0 && <span className={MOBILE_NAV_STYLES.badge}>{wishlistCount}</span>}
+                  </button>
+
+                  <div className="px-3 pt-6">
+                    <Button 
+                      variant="outline" 
+                      className="w-full h-8 text-[11px] font-bold text-red-600 border-zinc-200 hover:bg-red-50 hover:text-red-700"
+                      onClick={() => signOut()}
+                    >
+                      <LogOut className="mr-2 size-3" /> Sign Out
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <Link 
+                  to="/sign-in" 
+                  onClick={() => setIsOpen(false)}
+                  className={MOBILE_NAV_STYLES.item}
+                >
+                  <span className="flex items-center">
+                    <LogIn className={MOBILE_NAV_STYLES.icon} /> Sign In
+                  </span>
+                  <ChevronRight className="size-3 text-zinc-300" />
+                </Link>
+              )}
+            </div>
+          </div>
+
+          <div className="p-4 border-t bg-zinc-50/50">
+            <p className="text-[10px] text-center text-zinc-400 font-medium uppercase tracking-widest">
+              © 2026 E-Shopify
+            </p>
+          </div>
         </SheetContent>
       </Sheet>
     </div>
-  );
+  )
 }

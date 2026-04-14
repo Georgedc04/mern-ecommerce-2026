@@ -8,30 +8,21 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Promo, PromoFormValues } from "@/features/admin/promo/types";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-const dialogContentClass =
-  "max-h-[92vh] overflow-y-auto border-border bg-background sm:max-w-2xl";
-
-const layoutClass = "grid gap-6";
-
-const firstRowClass = "grid gap-4 md:grid-cols-2";
-
-const secondRowClass = "grid gap-4 md:grid-cols-2";
-
-const thirdRowClass = "grid gap-4 md:grid-cols-2";
-
-const fieldWrapClass = "space-y-2";
-
-const inputClass = "rounded-none";
-
-const errorTextClass = "text-sm text-destructive";
-
-const footerClass = "flex justify-end gap-3";
-
-const outlineButtonClass = "rounded-none";
-
-const primaryButtonClass = "rounded-none";
+/** * AMAZON ADMIN STYLES */
+const STYLES = {
+  content: "max-h-[95vh] overflow-y-auto sm:max-w-xl p-0 border-none rounded-sm shadow-2xl",
+  header: "px-6 py-4 border-b bg-zinc-50/50",
+  body: "p-6 space-y-5",
+  gridRow: "grid gap-4 md:grid-cols-2",
+  field: "space-y-1.5",
+  label: "text-[12px] font-bold text-zinc-700 uppercase tracking-tight",
+  input: "h-9 rounded-sm border-zinc-300 text-sm focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600",
+  footer: "flex justify-end gap-2 pt-4 border-t",
+  btnPrimary: "h-9 rounded-sm bg-zinc-900 px-6 text-xs font-bold text-white hover:bg-zinc-800 shadow-sm transition-all",
+  btnCancel: "h-9 rounded-sm px-4 text-xs font-medium text-zinc-600 hover:bg-zinc-100",
+};
 
 type PromoDialogProps = {
   open: boolean;
@@ -41,200 +32,183 @@ type PromoDialogProps = {
   onSaved: (values: PromoFormValues) => Promise<void>;
 };
 
-const defaultForm: PromoFormValues = {
-  code: "",
-  percentage: "",
-  count: "",
-  minimumOrderValue: "",
-  startsAt: "",
-  endsAt: "",
-};
-
-function toDateTimeLocal(value?: string) {
+/**
+ * HELPER: Formats date to datetime-local string
+ */
+function toDateTimeLocal(value?: string | Date) {
   if (!value) return "";
-  const date = new Date(value);
-
+  const date = typeof value === "string" ? new Date(value) : value;
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, "0");
   const day = `${date.getDate()}`.padStart(2, "0");
   const hours = `${date.getHours()}`.padStart(2, "0");
   const minutes = `${date.getMinutes()}`.padStart(2, "0");
-
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-function PromoDialog({
-  open,
-  onOpenChange,
-  promo,
-  saving,
-  onSaved,
-}: PromoDialogProps) {
-  const [form, setForm] = useState<PromoFormValues>(defaultForm);
-  const isEditMode = !!promo;
+/**
+ * HELPER: Dynamic date picker logic
+ */
+function getDynamicDate(offsetDays = 0) {
+  const date = new Date();
+  date.setDate(date.getDate() + offsetDays);
+  date.setMinutes(0, 0, 0); // Normalize to top of the hour
+  return toDateTimeLocal(date);
+}
 
-  useEffect(() => {
-    if (!open) {
-      setForm(defaultForm);
-      return;
-    }
+function PromoForm({ 
+  promo, 
+  saving, 
+  onSaved, 
+  onCancel 
+}: { 
+  promo: Promo | null; 
+  saving: boolean; 
+  onSaved: (values: PromoFormValues) => Promise<void>;
+  onCancel: () => void;
+}) {
+  // DYNAMIC INITIALIZATION: Pre-fills dates for new promos
+  const [form, setForm] = useState<PromoFormValues>({
+    code: promo?.code ?? "",
+    percentage: promo ? String(promo.percentage) : "",
+    count: promo ? String(promo.count) : "",
+    minimumOrderValue: promo ? String(promo.minimumOrderValue) : "",
+    startsAt: promo ? toDateTimeLocal(promo.startsAt) : getDynamicDate(0),
+    endsAt: promo ? toDateTimeLocal(promo.endsAt) : getDynamicDate(30),
+  });
 
-    if (promo) {
-      setForm({
-        code: promo.code,
-        percentage: String(promo.percentage),
-        count: String(promo.count),
-        minimumOrderValue: String(promo.minimumOrderValue),
-        startsAt: toDateTimeLocal(promo.startsAt),
-        endsAt: toDateTimeLocal(promo.endsAt),
-      });
+  const updateField = <K extends keyof PromoFormValues>(key: K, value: PromoFormValues[K]) => {
+    setForm((current) => ({ ...current, [key]: value }));
+  };
 
-      return;
-    }
+  const handleSubmit = async () => {
+    if (Object.values(form).some(v => !v.trim())) return;
 
-    setForm(defaultForm);
-  }, [open, promo]);
-
-  function updateField<K extends keyof PromoFormValues>(
-    key: K,
-    value: PromoFormValues[K],
-  ) {
-    setForm((current) => ({
-      ...current,
-      [key]: value,
-    }));
-  }
-
-  async function submit() {
-    if (
-      !form.code.trim() ||
-      !form.percentage.trim() ||
-      !form.count.trim() ||
-      !form.minimumOrderValue.trim() ||
-      !form.startsAt.trim() ||
-      !form.endsAt.trim()
-    ) {
-      return;
-    }
-
-    try {
-      await onSaved({
-        code: form.code.trim().toUpperCase(),
-        percentage: form.percentage,
-        count: form.count,
-        minimumOrderValue: form.minimumOrderValue,
-        startsAt: new Date(form.startsAt).toISOString(),
-        endsAt: new Date(form.endsAt).toISOString(),
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  }
+    await onSaved({
+      ...form,
+      code: form.code.trim().toUpperCase(),
+      startsAt: new Date(form.startsAt).toISOString(),
+      endsAt: new Date(form.endsAt).toISOString(),
+    });
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={dialogContentClass}>
-        <DialogHeader>
-          <DialogTitle>{isEditMode ? "Edit Promo" : "Add Promo"}</DialogTitle>
-        </DialogHeader>
-        <div className={layoutClass}>
-          <div className={firstRowClass}>
-            <div className={fieldWrapClass}>
-              <Label>Promo Code</Label>
-              <Input
-                className={inputClass}
-                type="text"
-                value={form.code}
-                placeholder="SUMMARY10"
-                onChange={(e) => updateField("code", e.target.value)}
-              />
-            </div>
-
-            <div className={fieldWrapClass}>
-              <Label>Discount Percentage</Label>
-              <Input
-                className={inputClass}
-                type="number"
-                min={"1"}
-                max={"100"}
-                value={form.percentage}
-                placeholder="10"
-                onChange={(e) => updateField("percentage", e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className={secondRowClass}>
-            <div className={fieldWrapClass}>
-              <Label>Promo Count</Label>
-              <Input
-                className={inputClass}
-                type="number"
-                min={"1"}
-                value={form.count}
-                placeholder="100"
-                onChange={(e) => updateField("count", e.target.value)}
-              />
-            </div>
-
-            <div className={fieldWrapClass}>
-              <Label>Minimum Order Value</Label>
-              <Input
-                className={inputClass}
-                type="number"
-                min={"0"}
-                value={form.minimumOrderValue}
-                placeholder="999"
-                onChange={(e) =>
-                  updateField("minimumOrderValue", e.target.value)
-                }
-              />
-            </div>
-          </div>
-
-          <div className={thirdRowClass}>
-            <div className={fieldWrapClass}>
-              <Label>Valid From</Label>
-              <Input
-                className={inputClass}
-                type="datetime-local"
-                value={form.startsAt}
-                onChange={(e) => updateField("startsAt", e.target.value)}
-              />
-            </div>
-
-            <div className={fieldWrapClass}>
-              <Label>Valid Till</Label>
-              <Input
-                className={inputClass}
-                type="datetime-local"
-                value={form.endsAt}
-                onChange={(e) => updateField("endsAt", e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className={footerClass}>
-            <Button
-              className={outlineButtonClass}
-              variant={"secondary"}
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={submit}
-              disabled={saving}
-              className={primaryButtonClass}
-            >
-              {saving
-                ? "Saving..."
-                : isEditMode
-                  ? "Update Promo"
-                  : "Create Promo"}
-            </Button>
-          </div>
+    <div className={STYLES.body}>
+      <div className={STYLES.gridRow}>
+        <div className={STYLES.field}>
+          <Label className={STYLES.label}>Promo Code</Label>
+          <Input 
+            className={STYLES.input} 
+            value={form.code} 
+            placeholder="E.g. FLASH50"
+            onChange={(e) => updateField("code", e.target.value)} 
+          />
         </div>
+        <div className={STYLES.field}>
+          <Label className={STYLES.label}>Discount %</Label>
+          <Input 
+            className={STYLES.input} 
+            type="number" 
+            value={form.percentage} 
+            placeholder="10"
+            onChange={(e) => updateField("percentage", e.target.value)} 
+          />
+        </div>
+      </div>
+
+      <div className={STYLES.gridRow}>
+        <div className={STYLES.field}>
+          <Label className={STYLES.label}>Promo Count</Label>
+          <Input 
+            className={STYLES.input} 
+            type="number" 
+            value={form.count} 
+            placeholder="100"
+            onChange={(e) => updateField("count", e.target.value)} 
+          />
+        </div>
+        <div className={STYLES.field}>
+          <Label className={STYLES.label}>Min. Order Value</Label>
+          <Input 
+            className={STYLES.input} 
+            type="number" 
+            value={form.minimumOrderValue} 
+            placeholder="500"
+            onChange={(e) => updateField("minimumOrderValue", e.target.value)} 
+          />
+        </div>
+      </div>
+
+      <div className={STYLES.gridRow}>
+        <div className={STYLES.field}>
+          <Label className={STYLES.label}>Valid From</Label>
+          <Input 
+            className={STYLES.input} 
+            type="datetime-local" 
+            value={form.startsAt} 
+            onChange={(e) => updateField("startsAt", e.target.value)} 
+          />
+        </div>
+        <div className={STYLES.field}>
+          <div className="flex justify-between items-center">
+            <Label className={STYLES.label}>Valid Till</Label>
+            <div className="flex gap-2">
+              <button 
+                type="button"
+                onClick={() => updateField("endsAt", getDynamicDate(7))}
+                className="text-[10px] text-cyan-700 hover:underline font-bold"
+              >
+                +7d
+              </button>
+              <button 
+                type="button"
+                onClick={() => updateField("endsAt", getDynamicDate(30))}
+                className="text-[10px] text-cyan-700 hover:underline font-bold"
+              >
+                +30d
+              </button>
+            </div>
+          </div>
+          <Input 
+            className={STYLES.input} 
+            type="datetime-local" 
+            value={form.endsAt} 
+            onChange={(e) => updateField("endsAt", e.target.value)} 
+          />
+        </div>
+      </div>
+
+      <div className={STYLES.footer}>
+        <Button variant="ghost" className={STYLES.btnCancel} onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button disabled={saving} className={STYLES.btnPrimary} onClick={handleSubmit}>
+          {saving ? "Saving..." : promo ? "Update Promo" : "Create Promo"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function PromoDialog({ open, onOpenChange, promo, saving, onSaved }: PromoDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className={STYLES.content}>
+        <DialogHeader className={STYLES.header}>
+          <DialogTitle className="text-sm font-bold">
+            {promo ? "Edit Promotion" : "Add New Promotion"}
+          </DialogTitle>
+        </DialogHeader>
+
+        {open && (
+          <PromoForm
+            key={promo?._id ?? "new-promo"}
+            promo={promo}
+            saving={saving}
+            onSaved={onSaved}
+            onCancel={() => onOpenChange(false)}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

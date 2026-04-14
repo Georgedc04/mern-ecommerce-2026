@@ -15,6 +15,7 @@ import AdminSettings from "./pages/admin/Settings";
 import Collections from "./pages/customer/Collections";
 import CollectionDetails from "./pages/customer/Collection-Details";
 import CustomerOrderSuccessPage from "./pages/customer/Order-Sucess";
+import FAQPage from "./pages/customer/FAQPage";
 
 export const router = createBrowserRouter([
   {
@@ -43,6 +44,10 @@ export const router = createBrowserRouter([
           {
             path: "collection/:id",
             element: <CollectionDetails />,
+          },
+          {
+            path: "faqs",
+            element: <FAQPage />,
           },
         ],
       },

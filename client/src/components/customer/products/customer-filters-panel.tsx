@@ -8,39 +8,26 @@ import {
   type CustomerProductFilters,
   type FacetKey,
 } from "@/features/customer/products/product-list.shared";
+import { cn } from "@/lib/utils";
+import { ChevronLeft, X } from "lucide-react";
 
-const panelWrapClass = "space-y-6 overflow-y-auto px-4 py-2 lg:px-0 lg:py-0";
-
-const panelHeaderClass = "flex items-center justify-between gap-3";
-
-const titleClass = "text-base font-semibold text-foreground";
-
-const clearButtonClass = "rounded-none px-2 text-sm";
-
-const sectionClass = "space-y-3";
-
-const sectionTitleClass = "text-sm font-medium text-foreground";
-
-const stackedOptionsClass = "space-y-1";
-
-const fullWidthButtonClass = "w-full justify-start rounded-none";
-
-const colorsWrapClass = "flex flex-wrap gap-3";
-
-const colorButtonBaseClass =
-  "flex flex-col items-center gap-2 text-xs text-muted-foreground";
-
-const colorButtonActiveClass = "text-foreground";
-
-const colorSwatchBaseClass = "h-8 w-8 border";
-
-const colorSwatchActiveClass = "border-primary ring-2 ring-primary/30";
-
-const colorSwatchInactiveClass = "border-border";
-
-
-const sizesWrapClass = "flex flex-wrap gap-2";
-
+/**
+ * AMAZON LOOK & FEEL:
+ * - text-[13px] base font
+ * - cyan-700 for links
+ * - Minimal padding (density)
+ * - Simple checkmark logic
+ */
+const STYLES = {
+  panel: "flex flex-col gap-4 overflow-y-auto bg-white py-2",
+  title: "text-[14px] font-bold text-zinc-900",
+  link: "flex items-center gap-2 text-[13px] py-0.5 text-zinc-900 hover:text-orange-700 cursor-pointer transition-colors",
+  activeLink: "font-bold text-zinc-900",
+  clearBtn: "flex items-center gap-1 text-[12px] text-cyan-700 hover:text-orange-700 hover:underline px-0 h-auto",
+  swatch: "size-5 rounded-sm border border-zinc-300 shadow-sm",
+  sizeBtn: "flex items-center justify-center border border-zinc-300 bg-white px-2 py-1 text-[12px] min-w-[36px] hover:bg-zinc-50 rounded-sm",
+  activeSize: "border-orange-600 ring-1 ring-orange-600 font-bold",
+};
 
 type CustomerFiltersPanelProps = {
   categories: ProductCategory[];
@@ -60,118 +47,117 @@ function CustomerFiltersPanel({
   onToggleFacet,
 }: CustomerFiltersPanelProps) {
   return (
-    <div className={panelWrapClass}>
-      <div className={panelHeaderClass}>
-        <div>
-          <h2 className={titleClass}>Filters</h2>
-        </div>
-        {hasActiveFilters ? (
-          <Button
-            variant={"ghost"}
-            className={clearButtonClass}
-            onClick={onClearFilters}
-          >
-            Clear All
+    <div className={STYLES.panel}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-1">
+        <h2 className={STYLES.title}>Filters</h2>
+        {hasActiveFilters && (
+          <Button variant="link" className={STYLES.clearBtn} onClick={onClearFilters}>
+            <X className="size-3" /> Clear all
           </Button>
-        ) : null}
+        )}
       </div>
 
-      <Separator />
-
-      <section className={sectionClass}>
-        <h3 className={sectionTitleClass}>Categories</h3>
-
-        <div className={stackedOptionsClass}>
+      {/* Categories - Amazon uses a nested tree style */}
+      <section className="space-y-1 px-1">
+        <h3 className="text-[13px] font-bold">Category</h3>
+        <div className="flex flex-col pl-1">
           {categories.map((item) => {
             const isActive = filters.category === item._id;
-
             return (
-              <Button
+              <div
                 key={item._id}
-                type="button"
-                variant={isActive ? "default" : "ghost"}
-                className={fullWidthButtonClass}
                 onClick={() => onToggleFacet("category", item._id)}
+                className={cn(STYLES.link, isActive && STYLES.activeLink)}
               >
+                {isActive && <ChevronLeft className="size-3 -ml-3" />}
                 {item.name}
-              </Button>
+              </div>
             );
           })}
         </div>
       </section>
-      <Separator />
 
-      <section className={sectionClass}>
-        <h3 className={sectionTitleClass}>Brands</h3>
-        <div className={stackedOptionsClass}>
+      <Separator className="opacity-50" />
+
+      {/* Brands - Amazon uses checkboxes (text-based here) */}
+      <section className="space-y-1 px-1">
+        <h3 className="text-[13px] font-bold">Brand</h3>
+        <div className="flex flex-col pl-1">
           {BRAND_OPTIONS.map((brand) => {
             const isActive = filters.brand === brand;
-
             return (
-              <Button
+              <div
                 key={brand}
-                type="button"
-                variant={isActive ? "default" : "ghost"}
-                className={fullWidthButtonClass}
                 onClick={() => onToggleFacet("brand", brand)}
+                className={cn(STYLES.link, isActive && STYLES.activeLink)}
               >
+                <div className={cn(
+                  "size-3.5 border border-zinc-400 rounded-sm flex items-center justify-center",
+                  isActive && "bg-cyan-700 border-cyan-700"
+                )}>
+                  {isActive && <div className="size-1.5 bg-white rounded-full" />}
+                </div>
                 {brand}
-              </Button>
+              </div>
             );
           })}
         </div>
       </section>
-      <Separator />
 
-      <section className={sectionClass}>
-        <h3 className={sectionTitleClass}>Colors</h3>
-        <div className={colorsWrapClass}>
+      <Separator className="opacity-50" />
+
+      {/* Colors - Compact squares */}
+      <section className="space-y-2 px-1">
+        <h3 className="text-[13px] font-bold">Color</h3>
+        <div className="flex flex-wrap gap-2">
           {availableColors.map((color) => {
             const isActive = filters.color === color;
-
             return (
               <button
                 key={color}
                 type="button"
-                className={`${colorButtonBaseClass} ${
-                  isActive ? colorButtonActiveClass : ""
-                }`}
+                className="group flex flex-col items-center gap-1"
                 onClick={() => onToggleFacet("color", color)}
+                title={color}
               >
-                <span
-                  className={`${colorSwatchBaseClass} ${
-                    isActive ? colorSwatchActiveClass : colorSwatchInactiveClass
-                  }`}
+                <div
+                  className={cn(
+                    STYLES.swatch,
+                    isActive && "ring-2 ring-orange-500 ring-offset-1 border-orange-500"
+                  )}
                   style={{ backgroundColor: getSwatchColor(color) }}
                 />
+                <span className={cn("text-[10px] text-zinc-500", isActive && "font-bold text-zinc-900")}>
+                  {color}
+                </span>
               </button>
             );
           })}
         </div>
       </section>
-      <Separator />
 
-      <section className={sectionClass}>
-        <h3 className={sectionTitleClass}>Sizes</h3>
-        <div className={sizesWrapClass}>
+      <Separator className="opacity-50" />
+
+      {/* Sizes - Small grid of boxes */}
+      <section className="space-y-2 px-1 pb-4">
+        <h3 className="text-[13px] font-bold">Size</h3>
+        <div className="flex flex-wrap gap-1.5">
           {SIZE_OPTIONS.map((size) => {
             const isActive = filters.size === size;
-
             return (
-              <Button
+              <button
                 key={size}
                 type="button"
-                variant={isActive ? "default" : "ghost"}
-                className={fullWidthButtonClass}
                 onClick={() => onToggleFacet("size", size)}
+                className={cn(STYLES.sizeBtn, isActive && STYLES.activeSize)}
               >
                 {size}
-              </Button>
+              </button>
             );
           })}
         </div>
       </section>
-      <Separator />
     </div>
   );
 }

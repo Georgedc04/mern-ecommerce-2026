@@ -1,44 +1,3 @@
-const dialogClass =
-  "max-h-[92vh] overflow-y-auto border-border bg-background sm:max-w-5xl";
-
-const dialogTitle = "flex items-center gap-2";
-
-const shellClass = "space-y-6";
-const accountCardClass = "border border-border/60 bg-card/80 p-5";
-const accountRowClass = "flex flex-wrap items-center justify-between gap-4";
-const accountTextClass = "space-y-1";
-const accountTitleClass = "text-xl font-semibold text-foreground";
-const emailClass = "text-sm text-muted-foreground";
-const pointsClass =
-  "inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-sm font-medium text-primary";
-
-const gridClass = "grid gap-6 lg:grid-cols-[1.1fr_0.9fr]";
-const singleGridClass = "grid gap-6";
-
-const sectionClass = "space-y-4";
-const sectionHeaderClass = "flex items-center justify-between gap-3";
-const sectionTitleClass = "text-lg font-semibold text-foreground";
-
-const listClass = "space-y-3";
-const itemClass = "space-y-3 border border-border/60 bg-card/80 p-4";
-const itemTopClass = "flex flex-wrap items-start justify-between gap-3";
-const itemTextClass = "space-y-1";
-const defaultClass =
-  "inline-flex rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary";
-const addressClass = "text-sm text-muted-foreground";
-const actionRowClass = "flex gap-2";
-const buttonClass = "rounded-none";
-const emptyClass = "text-sm text-muted-foreground";
-
-const formWrapClass = "space-y-4 border border-border/60 bg-card/80 p-5";
-const twoColumnClass = "grid gap-4 sm:grid-cols-2";
-const fieldClass = "space-y-2";
-const inputClass = "rounded-none";
-const checkboxRowClass =
-  "flex items-center gap-3 border border-border bg-secondary/40 px-3 py-3 text-sm text-foreground";
-const checkboxClass = "h-4 w-4 accent-[var(--primary)]";
-const formActionsClass = "flex flex-wrap justify-end gap-3";
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -51,7 +10,36 @@ import { Label } from "@/components/ui/label";
 import { useCustomerCartAndCheckoutStore } from "@/features/customer/cart-and-checkout/store";
 import { useCustomerProfileStore } from "@/features/customer/profile/store";
 import { useUser } from "@clerk/react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2, MapPin, Award } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+// AMAZON STYLES: Tight density, sharp corners, clear hierarchy
+const STYLES = {
+  content: "max-h-[95vh] overflow-y-auto sm:max-w-4xl p-0 border-none rounded-sm shadow-2xl",
+  header: "px-6 py-4 border-b bg-zinc-50/50",
+  shell: "p-6 space-y-6",
+  
+  // User Info Block
+  accountCard: "flex items-center justify-between p-4 rounded-md border bg-white shadow-sm",
+  userName: "text-lg font-bold text-zinc-900",
+  userEmail: "text-sm text-zinc-600",
+  points: "flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-orange-700 text-xs font-bold",
+
+  // Layout Grid
+  grid: "grid gap-8 lg:grid-cols-[1fr_350px]",
+  
+  // Address Items
+  addressCard: "group relative p-4 rounded-md border border-zinc-200 hover:border-zinc-400 bg-white transition-all",
+  addressName: "text-[14px] font-bold text-zinc-900",
+  addressText: "text-[13px] text-zinc-600 leading-snug mt-1",
+  badgeDefault: "text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-200",
+  
+  // Form elements
+  input: "h-9 text-sm rounded-sm border-zinc-300 focus:border-cyan-600 focus:ring-1 focus:ring-cyan-600",
+  btnPrimary: "h-8 rounded-sm bg-[#FFD814] hover:bg-[#F7CA00] text-zinc-900 text-xs font-medium border border-zinc-400/50 shadow-sm",
+  btnSecondary: "h-8 rounded-sm bg-white hover:bg-zinc-50 text-zinc-700 text-xs border border-zinc-300 shadow-sm",
+  btnDanger: "h-8 rounded-sm bg-white hover:bg-red-50 text-red-600 text-xs border border-zinc-300 hover:border-red-200"
+};
 
 function CustomerProfileDialog() {
   const {
@@ -69,171 +57,145 @@ function CustomerProfileDialog() {
   } = useCustomerProfileStore();
 
   const { points } = useCustomerCartAndCheckoutStore((state) => state);
-
   const { user } = useUser();
-
   const showForm = mode !== "none";
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeProfile()}>
-      <DialogContent className={dialogClass}>
-        <DialogHeader>
-          <DialogTitle className={dialogTitle}>Profile</DialogTitle>
+      <DialogContent className={STYLES.content}>
+        <DialogHeader className={STYLES.header}>
+          <DialogTitle className="text-base font-bold">Your Account & Addresses</DialogTitle>
         </DialogHeader>
 
-        <div className={shellClass}>
-          <section className={accountCardClass}>
-            <div className={accountRowClass}>
-              <div className={accountTextClass}>
-                <h2 className={accountTitleClass}>{user?.fullName}</h2>
-                <p className={emailClass}>
-                  {user?.primaryEmailAddress?.emailAddress}
-                </p>
+        <div className={STYLES.shell}>
+          {/* User Account Summary */}
+          <section className={STYLES.accountCard}>
+            <div className="flex items-center gap-4">
+              <div className="size-12 rounded-full bg-zinc-100 border flex items-center justify-center text-lg font-bold text-zinc-400">
+                {user?.firstName?.[0]}{user?.lastName?.[0]}
               </div>
-
-              <p className={pointsClass}>Points: {points}</p>
+              <div>
+                <h2 className={STYLES.userName}>{user?.fullName}</h2>
+                <p className={STYLES.userEmail}>{user?.primaryEmailAddress?.emailAddress}</p>
+              </div>
+            </div>
+            <div className={STYLES.points}>
+              <Award className="size-3.5" />
+              {points} Points
             </div>
           </section>
-          <div className={showForm ? gridClass : singleGridClass}>
-            <section className={sectionClass}>
-              <div className={sectionHeaderClass}>
-                <div>
-                  <h3 className={sectionTitleClass}>Saved Addresses</h3>
-                </div>
 
-                <Button className={buttonClass} onClick={startAdd}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Address
+          <div className={cn("grid gap-6", showForm ? STYLES.grid : "grid-cols-1")}>
+            {/* Addresses List */}
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold flex items-center gap-2">
+                  <MapPin className="size-4 text-zinc-400" />
+                  Your Addresses
+                </h3>
+                <Button variant="outline" className={STYLES.btnSecondary} onClick={startAdd}>
+                  <Plus className="mr-1.5 size-3.5" /> Add New
                 </Button>
               </div>
 
-              {!items.length ? (
-                <p className={emptyClass}>No address added</p>
-              ) : null}
-
-              {items.length ? (
-                <div className={listClass}>
-                  {items.map((item) => (
-                    <div key={item._id} className={itemClass}>
-                      <div className={itemTopClass}>
-                        <div className={itemTextClass}>
-                          <p>{item.fullName}</p>
-
-                          {item?.isDefault ? (
-                            <span className={defaultClass}>Default</span>
-                          ) : null}
+              <div className="space-y-3">
+                {items.length === 0 ? (
+                  <div className="p-8 text-center border border-dashed rounded-md bg-zinc-50">
+                    <p className="text-sm text-zinc-500 italic">No saved addresses found.</p>
+                  </div>
+                ) : (
+                  items.map((item) => (
+                    <div key={item._id} className={STYLES.addressCard}>
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <p className={STYLES.addressName}>{item.fullName}</p>
+                          {item.isDefault && <span className={STYLES.badgeDefault}>Default</span>}
                         </div>
-
-                        <p className={addressClass}>
-                          {item.address}, {item.state}, {item.postalCode}
-                        </p>
+                        <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button variant="outline" size="icon" className="size-7" onClick={() => startEdit(item)}>
+                            <Pencil className="size-3.5" />
+                          </Button>
+                          <Button variant="outline" size="icon" className="size-7 text-red-600 hover:bg-red-50" onClick={() => removeAddress(item._id)}>
+                            <Trash2 className="size-3.5" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className={actionRowClass}>
-                        <Button
-                          type="button"
-                          variant={"default"}
-                          className={buttonClass}
-                          onClick={() => startEdit(item)}
-                        >
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Edit
-                        </Button>
-                        <Button
-                          type="button"
-                          variant={"default"}
-                          className={buttonClass}
-                          onClick={() => removeAddress(item._id)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </Button>
-                      </div>
+                      <p className={STYLES.addressText}>
+                        {item.address}, {item.state}, {item.postalCode}
+                      </p>
                     </div>
-                  ))}
-                </div>
-              ) : null}
+                  ))
+                )}
+              </div>
             </section>
 
-            {/* form render here */}
-            {showForm ? (
-              <section className={formWrapClass}>
-                <h3 className={sectionTitleClass}>
-                  {mode === "edit" ? "Edit Address" : "Add Address"}
-                </h3>
+            {/* Form Section (Buy-Box Style Side Panel) */}
+            {showForm && (
+              <section className="space-y-4 animate-in slide-in-from-right-4 duration-300">
+                <div className="p-5 rounded-md border border-zinc-300 bg-zinc-50/50 shadow-sm space-y-4 sticky top-0">
+                  <h3 className="text-sm font-bold border-b pb-2">
+                    {mode === "edit" ? "Edit Address" : "Add Address"}
+                  </h3>
+                  
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <Label className="text-[12px] font-bold text-zinc-700">Full Name</Label>
+                      <Input
+                        className={STYLES.input}
+                        value={form.fullName}
+                        onChange={(e) => updateForm("fullName", e.target.value)}
+                        placeholder="e.g. John Doe"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[12px] font-bold text-zinc-700">Street Address</Label>
+                      <Input
+                        className={STYLES.input}
+                        value={form.address}
+                        onChange={(e) => updateForm("address", e.target.value)}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-[12px] font-bold text-zinc-700">State</Label>
+                        <Input
+                          className={STYLES.input}
+                          value={form.state}
+                          onChange={(e) => updateForm("state", e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[12px] font-bold text-zinc-700">Postal Code</Label>
+                        <Input
+                          className={STYLES.input}
+                          value={form.postalCode}
+                          onChange={(e) => updateForm("postalCode", e.target.value)}
+                        />
+                      </div>
+                    </div>
 
-                <div className={twoColumnClass}>
-                  <div className={fieldClass}>
-                    <Label>Full Name</Label>
-                    <Input
-                      className={inputClass}
-                      value={form.fullName}
-                      onChange={(e) => updateForm("fullName", e.target.value)}
-                      placeholder="Full Name"
-                    />
+                    <label className="flex items-center gap-2 py-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={form.isDefault}
+                        onChange={(e) => updateForm("isDefault", e.target.checked)}
+                        className="size-4 rounded-sm border-zinc-300 accent-cyan-700"
+                      />
+                      <span className="text-[12px] text-zinc-600">Set as default address</span>
+                    </label>
                   </div>
-                  <div className={fieldClass}>
-                    <Label>Address</Label>
-                    <Input
-                      className={inputClass}
-                      value={form.address}
-                      onChange={(e) => updateForm("address", e.target.value)}
-                      placeholder="Address"
-                    />
-                  </div>
-                </div>
-                <div className={twoColumnClass}>
-                  <div className={fieldClass}>
-                    <Label>State</Label>
-                    <Input
-                      className={inputClass}
-                      value={form.state}
-                      onChange={(e) => updateForm("state", e.target.value)}
-                      placeholder="State"
-                    />
-                  </div>
-                  <div className={fieldClass}>
-                    <Label>Postal Code</Label>
-                    <Input
-                      className={inputClass}
-                      value={form.postalCode}
-                      onChange={(e) => updateForm("postalCode", e.target.value)}
-                      placeholder="Postal Code"
-                    />
-                  </div>
-                </div>
 
-                <label className={checkboxRowClass}>
-                  <input
-                    type="checkbox"
-                    checked={form.isDefault}
-                    onChange={(event) =>
-                      updateForm("isDefault", event.target.checked)
-                    }
-                    className={checkboxClass}
-                  />
-                  <span>Set as default address</span>
-                </label>
-                <div className={formActionsClass}>
-                  <Button
-                    type="button"
-                    variant={"outline"}
-                    className={buttonClass}
-                    onClick={cancelForm}
-                  >
-                    Cancel
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant={"default"}
-                    className={buttonClass}
-                    onClick={() => void saveForm()}
-                  >
-                    {mode === "edit" ? "Update Address" : "Save Address"}
-                  </Button>
+                  <div className="flex flex-col gap-2 pt-2">
+                    <Button className={cn(STYLES.btnPrimary, "h-9 text-sm")} onClick={() => void saveForm()}>
+                      {mode === "edit" ? "Update Address" : "Save Address"}
+                    </Button>
+                    <Button variant="ghost" className="text-xs text-cyan-700 hover:underline" onClick={cancelForm}>
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
               </section>
-            ) : null}
+            )}
           </div>
         </div>
       </DialogContent>

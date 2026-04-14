@@ -55,8 +55,8 @@ function PromoTable({
             <TableHead>Min Order</TableHead>
             <TableHead>valid From</TableHead>
             <TableHead>Valid Till</TableHead>
-            <TableHead className="w-[80px] text-right">Edit</TableHead>
-            <TableHead className="w-[80px] text-right">Delete</TableHead>
+            <TableHead className="w-20 text-right">Edit</TableHead>
+            <TableHead className="w-20 text-right">Delete</TableHead>
           </TableRow>
         </TableHeader>
 

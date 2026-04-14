@@ -1,4 +1,6 @@
 export type CustomerHomeBanner = {
+  title: string;
+  link: string;
   _id: string;
   imageUrl: string;
   createdAt: string;

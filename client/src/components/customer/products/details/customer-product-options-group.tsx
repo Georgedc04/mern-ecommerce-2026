@@ -1,28 +1,36 @@
 import { getSwatchColor } from "@/features/customer/products/product-list.shared";
 import type { ProductSize } from "@/features/customer/products/types";
+import { cn } from "@/lib/utils";
 
-const wrapClass = "flex flex-wrap gap-2";
-
-const baseButtonClass =
-  "inline-flex items-center justify-center gap-2 border px-4 py-2 text-sm font-medium transition";
-
-const activeButtonClass =
-  "border-primary bg-primary/15 text-primary ring-2 ring-primary/20";
-
-const inactiveButtonClass =
-  "border-border bg-secondary text-secondary-foreground hover:border-primary/40";
-
-const sizeButtonClass = "min-w-12 rounded-none";
-
-const colorButtonClass = "rounded-none";
-
-const swatchClass = "h-4 w-4 border border-border";
+/** * AMAZON STYLE: 
+ * Tight gaps, smaller text, and subtle shadows instead of heavy rings.
+ */
+const STYLES = {
+  wrap: "flex flex-wrap gap-2",
+  // Reduced padding and smaller font
+  base: "relative flex items-center justify-center border text-[13px] transition-all duration-200 cursor-pointer select-none",
+  
+  // Amazon uses a thin orange or black border for active items
+  active: "border-orange-600 ring-1 ring-orange-600 bg-white z-10",
+  inactive: "border-zinc-300 bg-white hover:border-zinc-400 text-zinc-900",
+  
+  // Size-specific: Square and uniform
+  size: "h-8 min-w-[40px] px-2 rounded-sm",
+  
+  // Color-specific: Very compact
+  color: "h-9 px-2.5 rounded-sm gap-2",
+  swatch: "size-4 rounded-sm border border-black/10",
+  
+  // Sold out state (Optional but very Amazon)
+  disabled: "opacity-40 grayscale cursor-not-allowed bg-zinc-50 border-dashed"
+};
 
 type CustomerProductOptionsGroupProps = {
   values: string[];
   selectedValue: string;
   onSelect: (value: ProductSize) => void;
   variant: "color" | "size";
+  className?: string; // To allow parent to adjust spacing
 };
 
 function CustomerProductOptionsGroup({
@@ -30,9 +38,10 @@ function CustomerProductOptionsGroup({
   variant,
   selectedValue,
   onSelect,
+  className
 }: CustomerProductOptionsGroupProps) {
   return (
-    <div role="group" className={wrapClass}>
+    <div role="group" className={cn(STYLES.wrap, className)}>
       {values.map((value) => {
         const isActive = selectedValue === value;
 
@@ -41,19 +50,28 @@ function CustomerProductOptionsGroup({
             key={value}
             type="button"
             onClick={() => onSelect(value as ProductSize)}
-            className={`${baseButtonClass} ${
-              variant === "color" ? colorButtonClass : sizeButtonClass
-            } ${isActive ? activeButtonClass : inactiveButtonClass}`}
+            className={cn(
+              STYLES.base,
+              variant === "color" ? STYLES.color : STYLES.size,
+              isActive ? STYLES.active : STYLES.inactive
+            )}
           >
             {variant === "color" ? (
               <>
-                <span
-                  className={swatchClass}
+                <div
+                  className={STYLES.swatch}
                   style={{ backgroundColor: getSwatchColor(value) }}
+                  aria-hidden="true"
                 />
+                <span className="text-[12px] capitalize">{value}</span>
               </>
             ) : (
-              value
+              <span className="font-normal">{value}</span>
+            )}
+
+            {/* Subtle Active Checkmark (Amazon uses a tiny corner fold or border) */}
+            {isActive && (
+              <div className="absolute -right-px -bottom-px size-2 bg-orange-600 clip-path-triangle" />
             )}
           </button>
         );
